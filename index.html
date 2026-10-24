@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Шахта перерождений — кликер в браузере</title>
+<meta name="description" content="Кликер с перерождениями: добывайте камень, железо, золото, рубины, алмазы, изумруды и незерит, покупайте улучшения и открывайте достижения.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700&family=Unbounded:wght@600&display=swap">
+<style>
+:root{color-scheme:dark;--bg:#12161d;--p1:#1b222d;--p2:#252e3c;--line:#35415a;--text:#eef2f7;--mute:#9fadc4;
+--g0:#aab0ba;--g1:#6d7480;--g2:#3b414b;--ac:#6d7480;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px);scroll-behavior:smooth}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:radial-gradient(900px 500px at 50% -100px,color-mix(in srgb,var(--ac) 28%,transparent),transparent),var(--bg);
+color:var(--text);font:500 1rem/1.5 "Manrope",system-ui,-apple-system,"Segoe UI",sans-serif;min-height:100vh;transition:background .6s}
+.w{max-width:1040px;margin:0 auto;padding:0 16px}
+.d{font-family:"Unbounded","Arial Black",sans-serif;font-weight:600}
+header{display:flex;flex-wrap:wrap;gap:8px 24px;justify-content:space-between;align-items:center;padding-top:16px;padding-bottom:8px}
+header nav{display:flex;flex-wrap:wrap;gap:6px 18px}
+header a{color:var(--mute);text-decoration:none}header a:hover,header a:focus-visible{color:var(--text);text-decoration:underline}
+.hero{padding-top:20px;padding-bottom:6px}
+.hero h1{font-size:clamp(1.6rem,5.5vw,2.8rem);line-height:1.1;margin:0 0 8px;max-width:20ch}
+.hero p{margin:0;color:var(--mute);max-width:62ch}
+.track{display:flex;gap:8px;overflow-x:auto;padding:16px 16px 6px;margin:0 auto;max-width:1040px;list-style:none;scrollbar-width:thin}
+.track li{flex:0 0 auto;padding:6px 14px;border-radius:999px;border:1px solid var(--line);color:var(--mute);background:var(--p1);font-size:.9rem}
+.track li.done{color:var(--text)}.track li.done::before{content:"✓ "}
+.track li.now{border-color:var(--ac);color:var(--text);background:color-mix(in srgb,var(--ac) 25%,var(--p1));font-weight:700}
+.game{display:grid;gap:18px;padding-top:12px;padding-bottom:12px}
+@media(min-width:860px){.game{grid-template-columns:1fr 370px;align-items:start}}
+.card{background:var(--p1);border:1px solid var(--line);border-radius:22px;padding:18px}
+.mine{display:flex;flex-direction:column;align-items:center;gap:8px;position:relative;overflow:hidden;padding:26px 14px 20px}
+.cnt{font-size:clamp(2rem,9vw,3.3rem);margin:0}
+.lbl{margin:0;color:var(--mute)}
+.gem{background:none;border:0;padding:0;margin:6px 0;cursor:pointer;width:min(68vw,250px);transition:transform .08s;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.gem:active,.gem.hit{transform:scale(.93)}
+.gem svg{width:100%;height:auto;display:block;filter:drop-shadow(0 12px 32px color-mix(in srgb,var(--ac) 60%,transparent))}
+.blk{width:100%;height:auto;display:block;image-rendering:pixelated;border-radius:10px;box-shadow:0 0 0 3px #0007,0 14px 40px color-mix(in srgb,var(--ac) 55%,transparent)}
+.ic{width:18px;height:18px;image-rendering:pixelated;vertical-align:-3px;margin-right:6px;border-radius:3px}
+.f0{fill:var(--g0)}.f1{fill:var(--g1)}.f2{fill:var(--g2)}
+:focus-visible{outline:3px solid #ffd35c;outline-offset:3px}
+.pop{position:absolute;pointer-events:none;font-weight:700;color:#fff;text-shadow:0 1px 6px #000;animation:pop .8s ease-out forwards}
+@keyframes pop{to{opacity:0;transform:translateY(-64px)}}
+.reb{width:100%;margin-top:10px;padding-top:14px;border-top:1px solid var(--line);display:grid;gap:8px}
+.bar{height:12px;border-radius:99px;background:var(--p2);overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--ac);transition:width .2s}
+.row{display:flex;justify-content:space-between;gap:10px;color:var(--mute);font-size:.9rem}
+.btn{font:inherit;font-weight:700;color:#10141a;background:var(--text);border:0;border-radius:12px;padding:11px 14px;cursor:pointer}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.btn.go{background:var(--ac);color:#fff;text-shadow:0 1px 2px #0008}
+.shop{display:grid;gap:10px}
+.shop h2,.sec h2{margin:0 0 4px;font-size:1.1rem}
+.up{display:grid;grid-template-columns:1fr auto;gap:0 12px;text-align:left;width:100%;background:var(--p2);color:var(--text);border:1px solid var(--line);border-radius:14px;padding:11px 14px;font:inherit;cursor:pointer}
+.up:disabled{opacity:.45;cursor:not-allowed}.up:not(:disabled):hover{border-color:var(--ac)}
+.up small{color:var(--mute)}.up .c{grid-row:1/3;grid-column:2;align-self:center;font-weight:700;text-align:right}
+.sec{padding-top:18px;padding-bottom:6px}
+.ach{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(210px,1fr))}
+.ach div{background:var(--p1);border:1px solid var(--line);border-radius:14px;padding:11px 14px;opacity:.5}
+.ach div.on{opacity:1;border-color:var(--ac)}.ach b{display:block}.ach small{color:var(--mute)}
+.stats{display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}
+.stats div{background:var(--p1);border:1px solid var(--line);border-radius:14px;padding:10px 14px}
+.stats small{color:var(--mute);display:block}.stats b{font-size:1.1rem}
+.steps{display:grid;gap:10px;padding:0;margin:0;list-style:none;counter-reset:s}
+@media(min-width:700px){.steps{grid-template-columns:repeat(3,1fr)}}
+.steps li{background:var(--p1);border:1px solid var(--line);border-radius:14px;padding:12px 16px;counter-increment:s}
+.steps li::before{content:counter(s) ". ";font-weight:700;color:var(--ac)}
+footer{padding-top:14px;padding-bottom:30px;margin-top:20px;border-top:1px solid var(--line);color:var(--mute);font-size:.9rem;display:flex;flex-wrap:wrap;gap:8px 20px;justify-content:space-between}
+.lnk{background:none;border:0;color:var(--mute);font:inherit;text-decoration:underline;cursor:pointer;padding:0}
+.warn{position:fixed;left:50%;top:calc(120px + env(safe-area-inset-top,0px));transform:translateX(-50%);width:min(92vw,520px);z-index:9;background:#8f1d2c;color:#fff;border:2px solid #ffb3bd;border-radius:14px;padding:14px 18px;font-weight:700;text-align:center;box-shadow:0 10px 40px #000a}
+.warn[hidden]{display:none}
+#toasts{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top,0px));transform:translateX(-50%);width:min(92vw,400px);display:grid;gap:8px;z-index:8;pointer-events:none}
+.toast{background:var(--p2);border:1px solid var(--ac);border-left:6px solid var(--ac);border-radius:12px;padding:10px 14px;box-shadow:0 10px 30px #000b;animation:in .45s cubic-bezier(.2,.9,.3,1.2);display:grid}
+.toast small{color:var(--mute)}
+@keyframes in{from{opacity:0;transform:translateY(-70px)}}
+@media(prefers-reduced-motion:reduce){.pop{display:none}*{transition:none!important;animation:none!important}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<header class="w"><strong class="d">Шахта перерождений</strong>
+<nav aria-label="Разделы"><a href="#play">Играть</a><a href="#ach">Достижения</a><a href="#stats">Статистика</a><a href="#how">Как играть</a><button class="lnk" id="snd" type="button" aria-pressed="true">Звук: вкл</button></nav></header>
+<section class="w hero"><h1 class="d">Копайте глубже, перерождайтесь сильнее</h1>
+<p>Начните с куска камня и дойдите до незерита. Каждое перерождение даёт новый материал и утраивает доход.</p></section>
+<ul class="track" id="track" aria-label="Путь материалов"></ul>
+<main class="w game" id="play">
+ <section class="card mine" id="mine" aria-label="Шахта">
+  <p class="lbl" id="mat">Камень</p>
+  <p class="cnt d" id="cnt">0</p>
+  <p class="lbl" id="rate"></p>
+  <button class="gem" id="gem" aria-label="Добыть ресурс">
+   <canvas class="blk" id="tex" width="16" height="16" aria-hidden="true"></canvas></button>
+  <p class="lbl" id="pc"></p>
+  <div class="reb">
+   <div class="row"><span>Перерождение</span><span id="goal"></span></div>
+   <div class="bar" role="progressbar" aria-label="Прогресс к перерождению"><i id="fill"></i></div>
+   <button class="btn go" id="rebBtn" type="button" disabled></button>
+  </div>
+ </section>
+ <section class="card shop" aria-label="Улучшения"><h2>Улучшения</h2><div class="shop" id="shop"></div></section>
+</main>
+<section class="w sec" id="ach"><h2 class="d" id="achH">Достижения</h2><div class="ach" id="achList"></div></section>
+<section class="w sec" id="stats"><h2 class="d">Статистика</h2><div class="stats" id="statList"></div></section>
+<section class="w sec" id="how"><h2 class="d">Как играть</h2>
+<ol class="steps">
+<li><b>Копайте.</b> Нажимайте на материал, чтобы добывать его. Кирка усиливает каждый клик.</li>
+<li><b>Автоматизируйте.</b> Шахтёры, буры и реакторы добывают сами, а «Удача» увеличивает весь доход.</li>
+<li><b>Перерождайтесь.</b> Когда нужное количество ресурса будет у вас на руках (то, что уже потрачено на улучшения, не считается), перерождение сбросит ресурсы и улучшения, но откроет следующий материал и утроит доход навсегда.</li>
+</ol></section>
+<footer class="w"><span>Прогресс сохраняется в этом браузере.</span><button class="lnk" id="wipe" type="button">Удалить весь прогресс</button></footer>
+<div id="warn" class="warn" role="alert" hidden></div>
+<div id="toasts" aria-live="polite"></div>
+<script>
+(function(){
+var T=[["Камень","#aab0ba","#6d7480","#3b414b"],["Железо","#e6e9ee","#b3b9c4","#6e7683"],["Золото","#ffe58a","#f4be4f","#b9801a"],
+["Рубин","#ff9db6","#e8265f","#8f0f33"],["Алмаз","#c6fbff","#4fd8e6","#1b8ea0"],["Изумруд","#a6ffc4","#2fcf6e","#0f7a3d"],["Незерит","#c9b7c0","#8a6478","#2e2028"]];
+var U=[["pick","Кирка","+1 за клик",15,1.6,"click"],["miner","Шахтёр","+1 в секунду",50,1.15,1],["drill","Бур","+8 в секунду",400,1.15,8],
+["cart","Вагонетка","+50 в секунду",3000,1.15,50],["core","Реактор","+300 в секунду",25000,1.15,300],["luck","Удача","+10% ко всему доходу",1000,1.5,0]];
+var KEY="mine-rebirth-v2",S={r:0,run:0,life:0,clicks:0,reb:0,t:0,own:{},ach:{}};
+U.forEach(function(u){S.own[u[0]]=0});
+try{var d=JSON.parse(localStorage.getItem(KEY));if(d&&typeof d.r==="number"){["r","run","life","clicks","reb","t"].forEach(function(k){S[k]=+d[k]||0});
+U.forEach(function(u){S.own[u[0]]=(d.own&&d.own[u[0]])|0});S.ach=d.ach||{}}}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+var suf=["","тыс.","млн","млрд","трлн","квадр.","квинт."];
+function fmt(n){if(n<1000)return String(Math.floor(n));var i=Math.min(Math.floor(Math.log10(n)/3),suf.length-1),v=n/Math.pow(1000,i);
+return v.toFixed(v<10?2:v<100?1:0).replace(".",",")+" "+suf[i]}
+function tier(){return Math.min(S.reb,T.length-1)}
+function M(){return Math.pow(3,S.reb)*(1+.1*S.own.luck)}
+function pc(){return(1+S.own.pick)*M()}
+function rate(){var a=0;U.forEach(function(u){if(typeof u[5]=="number")a+=u[5]*S.own[u[0]]});return a*M()}
+function goal(){return 5000*Math.pow(4,S.reb)}
+function cost(u){return Math.ceil(u[3]*Math.pow(u[4],S.own[u[0]]))}
+function earn(x){S.r+=x;S.run+=x;S.life+=x}
+function $(i){return document.getElementById(i)}
+var AC=null,mg=null,nb=null,on=true;
+try{on=localStorage.getItem("mine-snd")!=="0"}catch(e){}
+function ctx(g){if(!on)return null;if(!AC){if(!g)return null;var C=window.AudioContext||window.webkitAudioContext;if(!C)return null;AC=new C();mg=AC.createGain();mg.gain.value=.6;mg.connect(AC.destination);var n=Math.floor(AC.sampleRate*.05),d;nb=AC.createBuffer(1,n,AC.sampleRate);d=nb.getChannelData(0);for(var i=0;i<n;i++)d[i]=(Math.random()*2-1)*(1-i/n)}
+if(AC.state==="suspended")AC.resume();return AC}
+function tone(f,t,dur,v,ty,f2){var o=AC.createOscillator(),g=AC.createGain();o.type=ty||"sine";o.frequency.setValueAtTime(f,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+dur);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(g);g.connect(mg);o.start(t);o.stop(t+dur+.03)}
+function thock(){var c=ctx(1);if(!c)return;var t=c.currentTime,r=.9+Math.random()*.2,s=c.createBufferSource(),f=c.createBiquadFilter(),g=c.createGain();s.buffer=nb;f.type="bandpass";f.frequency.value=1700*r;f.Q.value=.7;g.gain.setValueAtTime(.4,t);g.gain.exponentialRampToValueAtTime(.001,t+.045);s.connect(f);f.connect(g);g.connect(mg);s.start(t);tone(200*r,t,.09,.5,"sine",105*r)}
+function sBuy(){var c=ctx(1);if(!c)return;var t=c.currentTime;tone(520,t,.14,.22);tone(780,t+.07,.18,.2)}
+function sReb(){var c=ctx(1);if(!c)return;var t=c.currentTime;[262,330,392,523,659].forEach(function(f,i){tone(f,t+i*.11,.55,.17,"triangle")})}
+function sBell(){var c=ctx(0);if(!c)return;var t=c.currentTime;tone(880,t,.8,.16);tone(1320,t,.55,.07);tone(1760,t+.02,.35,.04)}
+function sWarn(){var c=ctx(1);if(!c)return;var t=c.currentTime;tone(160,t,.2,.45,"sine",90);tone(160,t+.22,.2,.45,"sine",90)}
+function sTick(){var c=ctx(0);if(!c)return;tone(560+Math.random()*240,c.currentTime,.12,.05)}
+var sb=$("snd");function lab(){sb.textContent="Звук: "+(on?"вкл":"выкл");sb.setAttribute("aria-pressed",on)}lab();
+sb.onclick=function(){on=!on;try{localStorage.setItem("mine-snd",on?"1":"0")}catch(e){}lab();sBuy()};
+function rng(s){return function(){s=(s*1664525+1013904223)>>>0;return s/4294967296}}
+function px(c,x,y,col){c.fillStyle=col;c.fillRect(x,y,1,1)}
+function pk(a,r){return a[Math.floor(r()*a.length)]}
+function noise(c,r,pal){for(var y=0;y<16;y++)for(var x=0;x<16;x++)px(c,x,y,pk(pal,r))}
+function cluster(c,r,pal,n){for(var k=0;k<n;k++){var x=1+Math.floor(r()*12),y=1+Math.floor(r()*12),w=2+Math.floor(r()*2),hh=2+Math.floor(r()*2);for(var j=0;j<hh;j++)for(var i=0;i<w;i++)if(r()>.2)px(c,x+i,y+j,pk(pal,r))}}
+function frame(c,dk,lt){for(var i=0;i<16;i++){px(c,i,0,lt);px(c,0,i,lt);px(c,i,15,dk);px(c,15,i,dk)}}
+var STONE=["#7d7d7d","#8a8a8a","#6e6e6e","#767676","#939393"];
+var TXF=[
+function(c,r){noise(c,r,STONE);for(var k=0;k<14;k++)px(c,Math.floor(r()*16),Math.floor(r()*16),"#585858")},
+function(c,r){noise(c,r,["#dcdcdc","#e8e8e8","#d2d2d2"]);frame(c,"#9a9a9a","#ffffff");[[3,3],[12,3],[3,12],[12,12]].forEach(function(p){px(c,p[0],p[1],"#8d8d8d")});for(var i=3;i<13;i++){px(c,i,8,"#bdbdbd");px(c,8,i,"#bdbdbd")}},
+function(c,r){noise(c,r,["#f8d24a","#fbe06b","#eec030"]);frame(c,"#b3860f","#fff6b0");for(var i=0;i<5;i++)px(c,3+i,3+i,"#fffbd0");px(c,9,3,"#fffbd0");px(c,3,9,"#fffbd0")},
+function(c,r){noise(c,r,["#4a4a52","#43434b","#55555d","#4e4e57"]);cluster(c,r,["#ff4d78","#e8265f","#b3123f","#ff9db6"],5)},
+function(c,r){noise(c,r,["#55dbe8","#6ee7f2","#46cbd9"]);for(var i=-15;i<16;i+=5)for(var k=0;k<16;k++){var y=k+i;if(y>=0&&y<16)px(c,k,y,"#d9fcff")}frame(c,"#1f9fb0","#c5fbff")},
+function(c,r){noise(c,r,STONE);cluster(c,r,["#46e07f","#1fbf5b","#0f7a3d","#b8ffd0"],5)},
+function(c,r){noise(c,r,["#4b3a42","#3f3037","#554350","#483840"]);for(var x=0;x<16;x+=4)for(var y=0;y<16;y++)if(r()>.3)px(c,x,y,"#2a1d24");cluster(c,r,["#8a6478","#c9a88a","#a07f66"],3)}];
+function paint(cv,n){TXF[n](cv.getContext("2d"),rng(1234+n*97))}
+function ge(k,v){return function(){return S[k]>=v}}
+function go(k,v){return function(){return S.own[k]>=v}}
+var A=[["Первый удар","Сделайте первый клик",ge("clicks",1)],["Сотня ударов","100 кликов",ge("clicks",100)],
+["Наёмный труд","Купите шахтёра",go("miner",1)],["Бригада","10 шахтёров",go("miner",10)],
+["Первый миллион","Добудьте суммарно 1 млн",ge("life",1e6)],["Новая жизнь","Первое перерождение",ge("reb",1)],
+["Золотая лихорадка","Достигните золота",ge("reb",2)],["Алмазный век","Достигните алмаза",ge("reb",4)],
+["Мастер шахты","Достигните незерита",ge("reb",6)],["Везунчик","10 уровней «Удачи»",go("luck",10)],
+["Тысяча ударов","1000 кликов",ge("clicks",1000)],["Мозоли на руках","10 000 кликов",ge("clicks",10000)],
+["Крепкая кирка","10 уровней кирки",go("pick",10)],["Кирка мастера","50 уровней кирки",go("pick",50)],
+["Посёлок шахтёров","50 шахтёров",go("miner",50)],["Первый бур","Купите бур",go("drill",1)],
+["Бурильщик","10 буров",go("drill",10)],["На колёсах","Купите вагонетку",go("cart",1)],
+["Рудный экспресс","10 вагонеток",go("cart",10)],["Энергия недр","Купите реактор",go("core",1)],
+["Реакторный зал","10 реакторов",go("core",10)],["Тысячник","Добудьте суммарно 1000",ge("life",1000)],
+["Миллиардер","Добудьте суммарно 1 млрд",ge("life",1e9)],["Триллион","Добудьте суммарно 1 трлн",ge("life",1e12)],
+["Полные карманы","Держите 100 тыс. на руках",ge("r",1e5)],["Пошёл поток","100 в секунду",function(){return rate()>=100}],
+["Река ресурсов","10 тыс. в секунду",function(){return rate()>=1e4}],["Водопад","1 млн в секунду",function(){return rate()>=1e6}],
+["Рубиновая жила","Достигните рубина",ge("reb",3)],["Изумрудный город","Достигните изумруда",ge("reb",5)],
+["Вечный шахтёр","10 перерождений",ge("reb",10)],["Десять минут в шахте","10 минут в игре",ge("t",600)],
+["Завсегдатай","1 час в игре",ge("t",3600)]];
+var shop=$("shop"),ub={};
+U.forEach(function(u){var b=document.createElement("button");b.className="up";b.type="button";
+b.innerHTML="<b>"+u[1]+' <span class="o"></span></b><small>'+u[2]+'</small><span class="c"></span>';
+b.onclick=function(){var c=cost(u);if(S.r>=c){S.r-=c;S.own[u[0]]++;sBuy();draw();save()}};shop.appendChild(b);ub[u[0]]=b});
+var al=$("achList");A.forEach(function(a,i){var e=document.createElement("div");e.innerHTML="<b>"+a[0]+"</b><small>"+a[1]+"</small>";e.id="a"+i;al.appendChild(e)});
+var tr=$("track");T.forEach(function(t,i){var e=document.createElement("li"),cv=document.createElement("canvas");cv.width=16;cv.height=16;cv.className="ic";paint(cv,i);e.appendChild(cv);e.appendChild(document.createTextNode(t[0]));tr.appendChild(e)});
+var stat=[["Добыто за всё время",function(){return fmt(S.life)}],["Клики",function(){return fmt(S.clicks)}],["Перерождения",function(){return S.reb}],
+["За клик",function(){return fmt(pc())}],["В секунду",function(){return fmt(rate())}],["Множитель дохода",function(){return"×"+fmt(M())}],
+["Время в игре",function(){var m=Math.floor(S.t/60);return Math.floor(m/60)+" ч "+m%60+" мин"}]];
+var sl=$("statList");stat.forEach(function(s){var e=document.createElement("div");e.innerHTML="<small>"+s[0]+"</small><b></b>";sl.appendChild(e)});
+var last=-1;
+function draw(){var n=tier(),t=T[n],R=document.documentElement.style;
+if(last!==n){last=n;R.setProperty("--g0",t[1]);R.setProperty("--g1",t[2]);R.setProperty("--g2",t[3]);R.setProperty("--ac",t[2]);
+$("mat").textContent=t[0];paint($("tex"),n);$("gem").setAttribute("aria-label","Добыть: "+t[0].toLowerCase());
+[].forEach.call(tr.children,function(e,i){e.className=i<n?"done":i==n?"now":""})}
+$("cnt").textContent=fmt(S.r);$("rate").textContent=fmt(rate())+" в секунду";$("pc").textContent=fmt(pc())+" за клик";
+var g=goal(),p=Math.min(1,S.r/g),nx=T[Math.min(S.reb+1,T.length-1)][0];
+$("goal").textContent=fmt(Math.min(S.r,g))+" / "+fmt(g);$("fill").style.width=p*100+"%";
+var rb=$("rebBtn");rb.disabled=S.r<g;if(!armed)rb.textContent=S.reb>=T.length-1?"Перерождение: ещё ×3 к доходу":"Перерождение в "+nx+" (×3 к доходу)";
+U.forEach(function(u){var b=ub[u[0]],c=cost(u);b.querySelector(".o").textContent=S.own[u[0]]?"× "+S.own[u[0]]:"";b.querySelector(".c").textContent=fmt(c);b.disabled=S.r<c});
+[].forEach.call(sl.children,function(e,i){e.lastChild.textContent=stat[i][1]()});
+document.title=fmt(S.r)+" "+t[0].toLowerCase()+" — Шахта перерождений"}
+function toast(x,y){sBell();var e=document.createElement("div"),b=document.createElement("b"),s=document.createElement("small");e.className="toast";b.textContent="Достижение: "+x;s.textContent=y;e.appendChild(b);e.appendChild(s);$("toasts").appendChild(e);setTimeout(function(){e.remove()},4500)}
+function checkAch(){A.forEach(function(a,i){var e=$("a"+i);if(S.ach[i]){e.className="on"}else if(a[2]()){S.ach[i]=1;e.className="on";toast(a[0],a[1])}});$("achH").textContent="Достижения "+Object.keys(S.ach).length+" / "+A.length;}
+var reduce=matchMedia("(prefers-reduced-motion: reduce)").matches,mine=$("mine");
+var ck=[],wt;function warn(){var w=$("warn");if(w.hidden)sWarn();w.textContent="Обнаружен автокликер: 20 и больше кликов в секунду. Выключите его! Лишние клики не засчитываются.";w.hidden=false;clearTimeout(wt);wt=setTimeout(function(){w.hidden=true},4000)}
+$("gem").onclick=function(e){var now=performance.now();ck=ck.filter(function(t){return now-t<1000});if(ck.length>=19){warn();return}ck.push(now);thock();var p=pc();earn(p);S.clicks++;
+if(!reduce){var el=document.createElement("span");el.className="pop";el.textContent="+"+fmt(p);var b=mine.getBoundingClientRect();
+el.style.left=(e.clientX?e.clientX-b.left:b.width/2)+"px";el.style.top=((e.clientY?e.clientY-b.top:b.height/2)-20)+"px";mine.appendChild(el);setTimeout(function(){el.remove()},800)}
+draw()};
+var armed=false,rb=$("rebBtn");
+rb.onclick=function(){if(S.r<goal())return;if(!armed){armed=true;rb.textContent="Сбросить улучшения и переродиться? Нажмите ещё раз";setTimeout(function(){armed=false;draw()},4000);return}
+armed=false;sReb();S.reb++;S.r=0;S.run=0;U.forEach(function(u){S.own[u[0]]=0});last=-1;draw();checkAch();save()};
+var wa=false;$("wipe").onclick=function(){var b=this;if(!wa){wa=true;b.textContent="Точно удалить всё? Нажмите ещё раз";setTimeout(function(){wa=false;b.textContent="Удалить весь прогресс"},4000);return}
+wa=false;b.textContent="Удалить весь прогресс";S={r:0,run:0,life:0,clicks:0,reb:0,t:0,own:{},ach:{}};U.forEach(function(u){S.own[u[0]]=0});last=-1;
+A.forEach(function(a,i){$("a"+i).className=""});draw();save()};
+var lt=performance.now(),acc=0,tk=0;
+setInterval(function(){var n=performance.now(),dt=(n-lt)/1000;lt=n;S.t+=dt;var r=rate();if(r>0){earn(r*dt);tk+=dt;if(tk>=1.6){tk=0;sTick()}}draw();checkAch();acc+=dt;if(acc>=5){acc=0;save()}},200);
+addEventListener("beforeunload",save);
+draw();checkAch();
+})();
+</script>
+</body>
+</html>
